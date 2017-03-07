@@ -48,13 +48,13 @@ public abstract class RobotRulesParser {
             .getLogger(RobotRulesParser.class);
 
     // TODO configure TTL and max size via config
-    protected static final Cache<String, BaseRobotRules> CACHE = CacheBuilder
+    protected static final Cache<String, RobotRules> CACHE = CacheBuilder
             .newBuilder().expireAfterWrite(6, TimeUnit.HOURS)
             .maximumSize(10000).build();
 
     // if a server or client error happened while fetching the robots
     // cache the result for a shorter period before trying again
-    protected static final Cache<String, BaseRobotRules> ERRORCACHE = CacheBuilder
+    protected static final Cache<String, RobotRules> ERRORCACHE = CacheBuilder
             .newBuilder().expireAfterWrite(1, TimeUnit.HOURS)
             .maximumSize(10000).build();
 
@@ -158,6 +158,6 @@ public abstract class RobotRulesParser {
         return getRobotRulesSet(protocol, u);
     }
 
-    public abstract BaseRobotRules getRobotRulesSet(Protocol protocol, URL url);
+    public abstract RobotRules getRobotRulesSet(Protocol protocol, URL url);
 
 }

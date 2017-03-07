@@ -27,6 +27,9 @@ public abstract class AbstractHttpProtocol implements Protocol {
 
     private com.digitalpebble.stormcrawler.protocol.HttpRobotRulesParser robots;
 
+    public static final BaseRobotRules IGNORE_RULES = new RobotRules(
+            RobotRulesParser.EMPTY_RULES, true);
+
     protected boolean skipRobots = false;
 
     protected boolean storeHTTPHeaders = false;
@@ -42,7 +45,7 @@ public abstract class AbstractHttpProtocol implements Protocol {
     @Override
     public BaseRobotRules getRobotRules(String url) {
         if (this.skipRobots)
-            return RobotRulesParser.EMPTY_RULES;
+            return IGNORE_RULES;
         return robots.getRobotRulesSet(this, url);
     }
 

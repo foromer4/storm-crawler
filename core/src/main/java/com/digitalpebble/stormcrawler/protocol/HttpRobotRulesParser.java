@@ -25,6 +25,7 @@ import org.apache.storm.Config;
 
 import com.digitalpebble.stormcrawler.Metadata;
 import com.digitalpebble.stormcrawler.util.ConfUtils;
+import com.google.common.cache.Cache;
 
 import crawlercommons.robots.BaseRobotRules;
 
@@ -85,21 +86,23 @@ public class HttpRobotRulesParser extends RobotRulesParser {
      * @return {@link BaseRobotRules} holding the rules from robots.txt
      */
     @Override
-    public BaseRobotRules getRobotRulesSet(Protocol http, URL url) {
+    public RobotRules getRobotRulesSet(Protocol http, URL url) {
 
         String cacheKey = getCacheKey(url);
 
         // check in the error cache first
-        BaseRobotRules robotRules = ERRORCACHE.getIfPresent(cacheKey);
-        if (robotRules != null) {
-            return robotRules;
+        RobotRules cachedRules = ERRORCACHE.getIfPresent(cacheKey);
+        if (cachedRules != null) {
+            return cachedRules;
         }
 
         // now try the proper cache
-        robotRules = CACHE.getIfPresent(cacheKey);
-        if (robotRules != null) {
-            return robotRules;
+        cachedRules = CACHE.getIfPresent(cacheKey);
+        if (cachedRules != null) {
+            return cachedRules;
         }
+
+        BaseRobotRules robotRules = null;
 
         boolean cacheRule = true;
         URL redir = null;
@@ -144,29 +147,24 @@ public class HttpRobotRulesParser extends RobotRulesParser {
             robotRules = EMPTY_RULES;
         }
 
-        if (cacheRule) {
-            LOG.debug("Caching robots for {} under key {}", url, cacheKey);
-            CACHE.put(cacheKey, robotRules); // cache rules for host
-            if (redir != null
-                    && !redir.getHost().equalsIgnoreCase(url.getHost())) {
-                // cache also for the redirected host
-                String keyredir = getCacheKey(redir);
-                LOG.debug("Caching robots for {} under key {}", redir, keyredir);
-                CACHE.put(keyredir, robotRules);
-            }
-        } else {
-            LOG.debug("Error Caching robots for {} under key {}", url, cacheKey);
-            ERRORCACHE.put(cacheKey, robotRules); // cache rules for host
-            if (redir != null
-                    && !redir.getHost().equalsIgnoreCase(url.getHost())) {
-                // cache also for the redirected host
-                String keyredir = getCacheKey(redir);
-                LOG.debug("Error Caching robots for {} under key {}", redir,
-                        keyredir);
-                ERRORCACHE.put(keyredir, robotRules);
-            }
+        Cache<String, RobotRules> cacheToUse = CACHE;
+        String cacheName = "success";
+        if (!cacheRule) {
+            cacheToUse = ERRORCACHE;
+            cacheName = "error";
         }
 
-        return robotRules;
+        LOG.debug("Caching robots for {} under key {} in cache {}", url,
+                cacheKey, cacheName);
+        cacheToUse.put(cacheKey, new RobotRules(robotRules, true));
+        if (redir != null && !redir.getHost().equalsIgnoreCase(url.getHost())) {
+            // cache also for the redirected host
+            String keyredir = getCacheKey(redir);
+            LOG.debug("Caching robots for {} under key {} in cache {}", redir,
+                    keyredir, cacheName);
+            cacheToUse.put(keyredir, new RobotRules(robotRules, true));
+        }
+
+        return new RobotRules(robotRules, false);
     }
 }

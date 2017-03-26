@@ -54,6 +54,7 @@ import com.digitalpebble.stormcrawler.protocol.AbstractHttpProtocol;
 import com.digitalpebble.stormcrawler.protocol.ProtocolResponse;
 import com.digitalpebble.stormcrawler.util.ConfUtils;
 
+
 /**
  * Uses Apache httpclient to handle http and https
  **/
@@ -71,6 +72,9 @@ public class HttpProtocol extends AbstractHttpProtocol implements
     private HttpClientBuilder builder;
 
     private RequestConfig requestConfig;
+    
+    public static final String COOKIES_HEADER = "cookie";
+	
 
     @Override
     public void configure(final Config conf) {
@@ -162,6 +166,10 @@ public class HttpProtocol extends AbstractHttpProtocol implements
             if (StringUtils.isNotBlank(ifNoneMatch)) {
                 httpget.addHeader("If-None-Match", ifNoneMatch);
             }
+            
+            if(useCookies) {
+            	addCookiesToRequest(httpget, md);
+            }
         }
 
         // no need to release the connection explicitly as this is handled
@@ -171,7 +179,12 @@ public class HttpProtocol extends AbstractHttpProtocol implements
         }
     }
 
-    @Override
+    private void addCookiesToRequest(HttpGet httpget, Metadata md) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
     public ProtocolResponse handleResponse(HttpResponse response)
             throws IOException {
 
@@ -187,11 +200,11 @@ public class HttpProtocol extends AbstractHttpProtocol implements
         HeaderIterator iter = response.headerIterator();
         while (iter.hasNext()) {
             Header header = iter.nextHeader();
-            if (storeHTTPHeaders) {
+            if (shouldStoreHeader(header)) {
                 verbatim.append(header.toString()).append("\r\n");
-            }
-            metadata.addValue(header.getName().toLowerCase(Locale.ROOT),
-                    header.getValue());
+                metadata.addValue(header.getName().toLowerCase(Locale.ROOT),
+                        header.getValue());
+            } 
         }
 
         MutableBoolean trimmed = new MutableBoolean();
@@ -204,13 +217,22 @@ public class HttpProtocol extends AbstractHttpProtocol implements
             LOG.warn("HTTP content trimmed to {}", bytes.length);
         }
 
-        if (storeHTTPHeaders) {
+        if (shouldStoreVerbatim(verbatim)) {
             verbatim.append("\r\n");
             metadata.setValue("_response.headers_", verbatim.toString());
         }
 
         return new ProtocolResponse(bytes, status, metadata);
     }
+
+	private boolean shouldStoreVerbatim(StringBuilder verbatim) {
+		return storeHTTPHeaders || (useCookies && verbatim.length() > 0);
+	}
+
+	private boolean shouldStoreHeader(Header header) {
+		return storeHTTPHeaders ||
+			(useCookies && header.getName().toLowerCase(Locale.ROOT) == COOKIES_HEADER);
+	}
 
     private static final byte[] toByteArray(final HttpEntity entity,
             int maxContent, MutableBoolean trimmed) throws IOException {

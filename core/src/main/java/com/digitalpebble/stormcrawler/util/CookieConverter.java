@@ -4,40 +4,37 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
-
-import org.apache.http.Header;
-import org.apache.http.HeaderIterator;
-import org.apache.http.HttpResponse;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.cookie.BasicClientCookie;
-
 import com.ibm.icu.text.SimpleDateFormat;
 
-public class CookiesHelper {		
-	
-	public static final String COOKIES_HEADER = "cookie";
-	
-	public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(
-		      "EEE, dd MMM yyyy HH:mm:ss zzz");
-	
-	 public static String extractCookiesString(HttpResponse response) {
-		  HeaderIterator iter = response.headerIterator();
-	        while (iter.hasNext()) {
-	            Header header = iter.nextHeader();
-	            if (header.getName().toLowerCase(Locale.ROOT) == COOKIES_HEADER) {
-	               return header.getValue();
-	            }	           
-	        }
-	        return null;
-	 }
 
+/**
+ * Helper to extract cookies from cookies string.
+ * based on Nutch.  @see <a href= https://gist.githubusercontent.com/jnioche/6141308519694b5c57d4fbd45d5990ac/raw/e7a9544131e9b2e7a542d9caea98dfd663c9e336/CookieConverter.java>CookieConverter</a>
+ * 
+ * @author OSchliefer
+ *
+ */
+public class CookieConverter {		
+	
+	
+	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(
+		      "EEE, dd MMM yyyy HH:mm:ss zzz");	
+	
+
+	 /**
+	  * Get a list of cookies based on the cookies string taken from response header and the target url.
+	  * @param cookiesString the value of the http header for "Cookie" in the http response.
+	  * @param targetURL the url for which we wish to pass the cookies in the request.
+	  * @return List off cookies to add to the request.
+	  */
 	  public static List<Cookie> getCookies(String cookiesString, URL targetURL) {
 	    ArrayList<Cookie> list = new ArrayList<Cookie>();
 
 	    String[] cookiestrings = cookiesString.toString().split("\t");
 	    
-	    //taken from nutch
+	   
 	    for (String cs : cookiestrings) {
 	      String name = null;
 	      String value = null;

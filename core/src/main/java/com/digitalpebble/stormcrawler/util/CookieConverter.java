@@ -29,7 +29,7 @@ public class CookieConverter {
 	  * @param targetURL the url for which we wish to pass the cookies in the request.
 	  * @return List off cookies to add to the request.
 	  */
-	  public static List<Cookie> getCookies(String cookiesString, URL targetURL) {
+	public static List<Cookie> getCookies(String cookiesString, URL targetURL) {
 	    ArrayList<Cookie> list = new ArrayList<Cookie>();
 
 	    String[] cookiestrings = cookiesString.toString().split("\t");

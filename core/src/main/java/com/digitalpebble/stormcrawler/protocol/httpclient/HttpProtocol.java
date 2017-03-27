@@ -179,51 +179,47 @@ public class HttpProtocol extends AbstractHttpProtocol implements ResponseHandle
 		}
 	}
 
-	@Override
-	public ProtocolResponse handleResponse(HttpResponse response) throws IOException {
+	 @Override
+	    public ProtocolResponse handleResponse(HttpResponse response)
+	            throws IOException {
 
-		StatusLine statusLine = response.getStatusLine();
-		int status = statusLine.getStatusCode();
+	        StatusLine statusLine = response.getStatusLine();
+	        int status = statusLine.getStatusCode();
 
-		StringBuilder verbatim = new StringBuilder();
-		if (storeHTTPHeaders) {
-			verbatim.append(statusLine.toString()).append("\r\n");
-		}
+	        StringBuilder verbatim = new StringBuilder();
+	        if (storeHTTPHeaders) {
+	            verbatim.append(statusLine.toString()).append("\r\n");
+	        }
 
-		Metadata metadata = new Metadata();
-		HeaderIterator iter = response.headerIterator();
-		while (iter.hasNext()) {
-			Header header = iter.nextHeader();
-			if (shouldStoreHeader(header)) {
-				verbatim.append(header.toString()).append("\r\n");
-				metadata.addValue(header.getName().toLowerCase(Locale.ROOT), header.getValue());
-			}
-		}
+	        Metadata metadata = new Metadata();
+	        HeaderIterator iter = response.headerIterator();
+	        while (iter.hasNext()) {
+	            Header header = iter.nextHeader();
+	            if (storeHTTPHeaders) {
+	                verbatim.append(header.toString()).append("\r\n");
+	            }
+	            metadata.addValue(header.getName().toLowerCase(Locale.ROOT),
+	                    header.getValue());
+	        }
 
-		MutableBoolean trimmed = new MutableBoolean();
+	        MutableBoolean trimmed = new MutableBoolean();
 
-		byte[] bytes = HttpProtocol.toByteArray(response.getEntity(), maxContent, trimmed);
+	        byte[] bytes = HttpProtocol.toByteArray(response.getEntity(),
+	                maxContent, trimmed);
 
-		if (trimmed.booleanValue()) {
-			metadata.setValue("http.trimmed", "true");
-			LOG.warn("HTTP content trimmed to {}", bytes.length);
-		}
+	        if (trimmed.booleanValue()) {
+	            metadata.setValue("http.trimmed", "true");
+	            LOG.warn("HTTP content trimmed to {}", bytes.length);
+	        }
 
-		if (shouldStoreVerbatim(verbatim)) {
-			verbatim.append("\r\n");
-			metadata.setValue("_response.headers_", verbatim.toString());
-		}
+	        if (storeHTTPHeaders) {
+	            verbatim.append("\r\n");
+	            metadata.setValue("_response.headers_", verbatim.toString());
+	        }
 
-		return new ProtocolResponse(bytes, status, metadata);
-	}
-
-	private boolean shouldStoreVerbatim(StringBuilder verbatim) {
-		return storeHTTPHeaders || (useCookies && verbatim.length() > 0);
-	}
-
-	private boolean shouldStoreHeader(Header header) {
-		return storeHTTPHeaders || (useCookies && header.getName().toLowerCase(Locale.ROOT) == COOKIES_HEADER);
-	}
+	        return new ProtocolResponse(bytes, status, metadata);
+	    }
+	
 
 	private static final byte[] toByteArray(final HttpEntity entity, int maxContent, MutableBoolean trimmed)
 			throws IOException {

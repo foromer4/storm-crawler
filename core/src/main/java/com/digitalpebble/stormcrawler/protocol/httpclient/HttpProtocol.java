@@ -73,7 +73,7 @@ public class HttpProtocol extends AbstractHttpProtocol implements ResponseHandle
 
 	private RequestConfig requestConfig;
 
-	public static final String COOKIES_HEADER = "cookie";
+	public static final String RESPONSE_COOKIES_HEADER = "set-cookie";
 
 	@Override
 	public void configure(final Config conf) {
@@ -164,17 +164,15 @@ public class HttpProtocol extends AbstractHttpProtocol implements ResponseHandle
 	}
 
 	private void addCookiesToRequest(HttpGet httpget, Metadata md) {
-		String[] cookieStrings = md.getValues(COOKIES_HEADER);
+		String[] cookieStrings = md.getValues(RESPONSE_COOKIES_HEADER);
 		if (cookieStrings != null && cookieStrings.length > 0) {
 			List<Cookie> cookies;
 			try {
-				cookies = CookieConverter.getCookies(cookieStrings[0], httpget.getURI().toURL());
+				cookies = CookieConverter.getCookies(cookieStrings, httpget.getURI().toURL());
 				for (Cookie c : cookies) {
 					httpget.setHeader("Cookie", c.getName() + "=" + c.getValue());
 				}
-			} catch (MalformedURLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			} catch (MalformedURLException e) { //Bad url , nothing to do				
 			}
 		}
 	}

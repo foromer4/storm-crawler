@@ -29,13 +29,10 @@ public class CookieConverter {
 	  * @param targetURL the url for which we wish to pass the cookies in the request.
 	  * @return List off cookies to add to the request.
 	  */
-	public static List<Cookie> getCookies(String cookiesString, URL targetURL) {
-	    ArrayList<Cookie> list = new ArrayList<Cookie>();
-
-	    String[] cookiestrings = cookiesString.toString().split("\t");
-	    
+	public static List<Cookie> getCookies(String[] cookiesStrings, URL targetURL) {
+		ArrayList<Cookie> list = new ArrayList<Cookie>();	     
 	   
-	    for (String cs : cookiestrings) {
+	    for (String cs : cookiesStrings) {
 	      String name = null;
 	      String value = null;
 
@@ -80,7 +77,7 @@ public class CookieConverter {
 	      if (path != null) {
 	        cookie.setPath(path);
 
-	        if (!targetURL.getPath().startsWith(path))
+	        if (!path.equals("")  && !path.equals("/") && !targetURL.getPath().startsWith(path))
 	          continue;
 	      }
 
@@ -96,6 +93,7 @@ public class CookieConverter {
 	      if (expires != null) {
 	        try {
 	          Date expirationDate = DATE_FORMAT.parse(expires);
+	          cookie.setExpiryDate(expirationDate);
 
 	          // check that it hasn't expired?
 	          if (cookie.isExpired(new Date()))
